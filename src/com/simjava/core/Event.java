@@ -1,16 +1,23 @@
 package com.simjava.core;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Event {
 
-    protected int priorityUrgent = 0;
-    protected int priorityNormal = 1;
+    final int priorityUrgent = 0;
+    final int priorityNormal = 1;
 
     private Environment environment;
     private EventValue eventValue;
-    private List<String> callBacks;
+    private ArrayList<String> callBacks;
+
+    public EventValue getEventValue() {
+        return eventValue;
+    }
+
+    public void setEventValue(EventValue eventValue) {
+        this.eventValue = eventValue;
+    }
 
     public Event(){
         this.environment = null;
@@ -19,7 +26,13 @@ public class Event {
 
     }
 
-    public Event(Environment env, List<String> callBacks, EventValue value){
+    public Event(Environment env){
+        this.environment = env;
+        this.callBacks = new ArrayList<String>();
+        this.eventValue = new EventValue("", true);
+    }
+
+    public Event(Environment env, ArrayList<String> callBacks, EventValue value){
         this.environment = env;
         this.callBacks = callBacks;
         this.eventValue = value;
@@ -40,29 +53,16 @@ public class Event {
         return this.eventValue.getData();
     }
 
-    public void Trigger(Event event){
-        this.eventValue.setData(event.eventValue.getData());
-//        this.environment.schedule(this);
-    }
-
     public Event Succeed(String data){
         this.eventValue.setData(data);
-//        this.environment.schedule(this);
+        this.environment.Schedule(this, this.priorityNormal, 0);
         return this;
     }
 
     public Event Fail(String err){
         this.eventValue.setData(err);
-//        this.environment.schedule(this);
+        this.environment.Schedule(this, this.priorityNormal, 0);
         return this;
     }
 }
-
-
-
-
-
-//class Interruption extends Event{
-//
-//}
 

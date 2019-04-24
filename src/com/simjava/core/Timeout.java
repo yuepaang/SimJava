@@ -13,7 +13,7 @@ public class Timeout extends Event{
     public Timeout(Environment environment, int delay, EventValue eventValue){
         super(environment, new ArrayList<String>(), eventValue);
         this.delay = delay;
-//        environment.schedule(this, super.priorityNormal, delay);
+        environment.Schedule(this, super.priorityNormal, delay);
 
     }
 
