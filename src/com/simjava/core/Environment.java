@@ -67,7 +67,6 @@ public class Environment {
         }
         Event event = queueItem.getEvent();
         this.now = queueItem.getTime();
-        event.Process();
     }
 
     public void Schedule(Event event, int priority, int delay){
@@ -83,7 +82,7 @@ public class Environment {
         while (!shouldStop) {
             Step();
         }
-        return utilEvent.getValue();
+        return utilEvent.eventValue.data;
     }
 
     public Process Process(Iterable<Event> generator, int priority) {

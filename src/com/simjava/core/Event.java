@@ -32,9 +32,9 @@ public class Event {
         if (!this.eventValue.isPending) {
             throw new ArithmeticException("already triggered");
         }
-        errVal = eventValue.data;
+        String errVal = eventValue.data;
         this.eventValue.data = errVal;
-        this.environment.Schedule(this, priority, 0);
+        this.environment.Schedule(this, 0, 0);
         return this;
     }
 }
