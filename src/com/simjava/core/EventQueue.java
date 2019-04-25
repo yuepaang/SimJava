@@ -10,7 +10,7 @@ public class EventQueue {
     private PriorityQueue<QueueItem> queue;
 
     public EventQueue(){
-        queue = new PriorityQueue<QueueItem>(new Comparator<QueueItem>() {
+        this.queue = new PriorityQueue<QueueItem>(new Comparator<QueueItem>() {
             @Override
             public int compare(QueueItem o1, QueueItem o2) {
                 if (o1.getTime() < o2.getTime()) {

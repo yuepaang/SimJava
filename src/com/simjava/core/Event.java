@@ -4,65 +4,121 @@ import java.util.ArrayList;
 
 public class Event {
 
-    final int priorityUrgent = 0;
-    final int priorityNormal = 1;
-
     private Environment environment;
-    private EventValue eventValue;
-    private ArrayList<String> callBacks;
+    private String value;
+    private boolean isOK;
+    private boolean isAlive;
+    private boolean isProcessed;
+    private boolean isTrigger;
 
-    public EventValue getEventValue() {
-        return eventValue;
+    public Environment getEnvironment() {
+        return environment;
     }
 
-    public void setEventValue(EventValue eventValue) {
-        this.eventValue = eventValue;
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
     }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public boolean isOK() {
+        return isOK;
+    }
+
+    public void setOK(boolean OK) {
+        isOK = OK;
+    }
+
+    public boolean isAlive() {
+        return isAlive;
+    }
+
+    public void setAlive(boolean alive) {
+        isAlive = alive;
+    }
+
+    public boolean isProcessed() {
+        return isProcessed;
+    }
+
+    public void setProcessed(boolean processed) {
+        isProcessed = processed;
+    }
+
+    public boolean isTrigger() {
+        return isTrigger;
+    }
+
+    public void setTrigger(boolean trigger) {
+        isTrigger = trigger;
+    }
+
+    //    private EventValue eventValue;
+//    private ArrayList<String> callBacks;
 
     public Event(){
         this.environment = null;
-        this.eventValue = new EventValue("", true);
-        this.callBacks = new ArrayList<String>();
+        this.value = "";
+//        this.eventValue = new EventValue("", true);
+//        this.callBacks = new ArrayList<String>();
 
     }
 
     public Event(Environment env){
         this.environment = env;
-        this.callBacks = new ArrayList<String>();
-        this.eventValue = new EventValue("", true);
+        this.value = "";
+//        this.callBacks = new ArrayList<String>();
+//        this.eventValue = new EventValue("", true);
     }
 
-    public Event(Environment env, ArrayList<String> callBacks, EventValue value){
+    public Event(Environment env, String value){
         this.environment = env;
-        this.callBacks = callBacks;
-        this.eventValue = value;
+        this.value = value;
+//        this.callBacks = callBacks;
+//        this.eventValue = value;
     }
 
-    public boolean Triggered(){
-        return !this.eventValue.getData().equals("");
-    }
-
-    public boolean Processed(){
-        return this.callBacks.size() == 0;
-    }
-
-    public String Value(){
-        if (this.eventValue.getData().equals("")) {
-            System.out.println("Value is not yet available");
+    public void Trigger(Event event, int priority){
+        if (isTrigger()) {
+            throw new ArithmeticException("already triggered");
         }
-        return this.eventValue.getData();
+        setOK(event.isOK());
+        setValue(event.getValue());
+        setTrigger(true);
+        this.environment.Schedule(this, priority, 0);
     }
 
-    public Event Succeed(String data){
-        this.eventValue.setData(data);
-        this.environment.Schedule(this, this.priorityNormal, 0);
-        return this;
+    public void Succeed(String data, int priority){
+        if (isTrigger()) {
+            throw new ArithmeticException("already triggered");
+        }
+        setOK(true);
+        setValue(data);
+        setTrigger(true);
+        this.environment.Schedule(this, priority, 0);
     }
 
-    public Event Fail(String err){
-        this.eventValue.setData(err);
-        this.environment.Schedule(this, this.priorityNormal, 0);
-        return this;
+    public void Fail(String err, int priority){
+        if (isTrigger()) {
+            throw new ArithmeticException("already triggered");
+        }
+        setOK(false);
+        setValue(err);
+        setTrigger(true);
+        this.environment.Schedule(this, priority, 0);
+    }
+
+    public void Process(){
+        if (isTrigger()) {
+            throw new ArithmeticException("already triggered");
+        }
+        setProcessed(true);
     }
 }
 
