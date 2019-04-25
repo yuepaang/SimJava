@@ -59,7 +59,7 @@ public class Environment {
     }
 
     public void Schedule(Event event, int priority, int delay){
-        eventQueue.Push(new QueueItem(event, getNow() + delay, priority, getEventID()+1));
+        eventQueue.Push(new QueueItem(event, this.getNow() + delay, priority, getEventID()+1));
     }
 
     public void Exit(){
