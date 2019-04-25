@@ -37,23 +37,21 @@ public class GoRoutineTest {
         F("direct");
 
         go(new Runnable() {
-            SendOnlyChannel<Integer> ch;
-            public Runnable with(SendOnlyChannel<Integer> ch) {this.ch = ch;return this;}
 
             public void run() {
-                for (int i = 2; ; i++) {
-                    this.ch.send(i);
-                }
+                F("goroutine");
             }
-        }.with(ch.getSendOnly()));
+        });
 
-        for (int i=0;i<10;i++) {
-            int prime = ch.receive();
-            fmt.Println(prime);
-            Channel<Integer> ch1 = Channel.make();
-            go(new Filter(ch.getReceiveOnly(),ch1.getSendOnly(),prime));
-            ch = ch1;
-        }
+        go(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("going");
+            }
+        });
+
+        System.out.println("Done");
+
     }
 
 }
