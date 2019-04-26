@@ -36,7 +36,7 @@ public class Process extends Event{
         if (isTrigger()) throw new ArithmeticException("The process has terminated and cannot be interrupted.");
         if (super.getEnvironment().getActiveProcess() == this) throw new ArithmeticException("A process is not allowed to interrupt itself.");
 
-        var interruptEvent = new Event(super.getEnvironment());
+        Event interruptEvent = new Event(super.getEnvironment());
         interruptEvent.AddCallback(new ActionImpl<Event>(e -> Resume(e)));
         interruptEvent.Fail(cause, priority);
 

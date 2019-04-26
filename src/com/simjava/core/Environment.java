@@ -9,7 +9,7 @@ public class Environment {
     private int now;
     private int eventID;
     private EventQueue eventQueue;
-    private boolean shouldStop = false;
+    private boolean shouldStop;
     private Process activeProcess;
 
     public int getNow() {
