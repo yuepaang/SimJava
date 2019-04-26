@@ -3,50 +3,53 @@ package com.simjava.core;
 import com.simjava.action.ActionImpl;
 import com.simjava.yield.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+
 
 public class Process extends Event{
 
+    private Environment environment;
+    private List<Function> callBackList;
+    private Object value;
+
     private Event target;
     private ClosableIterator<Event> generator;
-
-    public ClosableIterator<Event> getGenerator() {
-        return generator;
-    }
-
-    public void setGenerator(ClosableIterator<Event> generator) {
-        this.generator = generator;
-    }
 
     public Event getTarget() {
         return target;
     }
 
-    protected void setTarget(Event target) {
-        this.target = target;
+    public Object getValue() {
+        return value;
     }
 
-    public Process(Environment environment, Yielderable<Event> generator, int priority){
-        super(environment);
+    public Environment getEnvironment() {
+        return this.environment;
+    }
+
+    public boolean IsAlive(){
+        return this.value.equals(PENGDING);
+    }
+
+    public Process(Environment environment, Yielderable<Event> generator){
+        this.environment = environment;
+        this.callBackList = new ArrayList<>();
+        this.value = PENGDING;
+
         this.generator = generator.iterator();
-        setOK(true);
-        this.target = new Initialize(environment, this, priority);
+        this.target = new Initialize(environment, this);
     }
 
-    public void Interrupt(String cause, int priority) {
-        if (isTrigger()) throw new ArithmeticException("The process has terminated and cannot be interrupted.");
-        if (super.getEnvironment().getActiveProcess() == this) throw new ArithmeticException("A process is not allowed to interrupt itself.");
-
-        Event interruptEvent = new Event(super.getEnvironment());
-        interruptEvent.AddCallback(new ActionImpl<Event>(e -> Resume(e)));
-        interruptEvent.Fail(cause, priority);
-
-        if (this.target != null) this.target.RemoveCallback(new ActionImpl<Event>(e -> Resume(e)));
+    public void Interrupt(String cause) {
+        new Interruption(this, cause);
     }
 
     protected void Resume(Event event) {
-        super.getEnvironment().setActiveProcess(this);
+        this.environment.setActiveProcess(this);
         while (true) {
-            if (event.isOK()) {
+            if (event.OK()) {
                 if (generator.hasNext()) {
                     if (this.isTrigger()) {
                         // the generator called e.g. Environment.ActiveProcess.Fail
@@ -105,13 +108,5 @@ public class Process extends Event{
         return true;
     }
 
-    private class Initialize extends Event {
-        public Initialize(Environment environment, Process process, int priority) {
-            super(environment);
-            super.AddCallback(new ActionImpl<Event>(e -> process.Resume(e)));
-            setOK(true);
-            setTrigger(true);
-            environment.Schedule(this, priority);
-        }
-    }
+
 }

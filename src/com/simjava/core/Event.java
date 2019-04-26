@@ -1,138 +1,104 @@
 package com.simjava.core;
 
+import jdk.nashorn.internal.runtime.regexp.joni.exception.ValueException;
+
 import java.util.ArrayList;
 import java.util.List;
-import com.simjava.action.*;
+import java.util.function.Function;
+
 
 public class Event {
 
+    public static final int URGENT = 0;
+    public static final int NORMAL = 1;
+    public static final Object PENGDING = new Object();
+
     private Environment environment;
-    private List<Action<Event>> callBackList;
+    private List<Function> callBackList;
+    private Object value;
+    private boolean ok;
 
-    private String value;
-    private boolean isOK;
-    private boolean isAlive;
-    private boolean isProcessed;
-    private boolean isTrigger;
-
-    public Environment getEnvironment() {
-        return environment;
-    }
-
-    private void setEnvironment(Environment environment) {
-        this.environment = environment;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public boolean isOK() {
-        return isOK;
-    }
-
-    protected void setOK(boolean OK) {
-        isOK = OK;
-    }
-
-    public boolean isAlive() {
-        return !isTrigger() && !isProcessed();
-    }
-
-    public void setAlive(boolean alive) {
-        isAlive = alive;
-    }
-
-    public boolean isProcessed() {
-        return isProcessed;
-    }
-
-    protected void setProcessed(boolean processed) {
-        isProcessed = processed;
-    }
-
-    public boolean isTrigger() {
-        return isTrigger;
-    }
-
-    protected void setTrigger(boolean trigger) {
-        isTrigger = trigger;
-    }
-
-    public List<Action<Event>> getCallBackList() {
+    public List<Function> getCallBackList() {
         return callBackList;
     }
 
-    public void setCallBackList(List<Action<Event>> callBackList) {
+    public void setCallBackList(List<Function> callBackList) {
         this.callBackList = callBackList;
+    }
+
+    public void addCallBack(Function callback) {
+        this.callBackList.add(callback);
     }
 
     public Event(){
         this.environment = null;
-        this.value = "";
+        this.value = PENGDING;
         this.callBackList = new ArrayList<>();
         }
 
     public Event(Environment env){
         this.environment = env;
-        this.value = "";
+        this.value = PENGDING;
         this.callBackList = new ArrayList<>();
 
     }
 
-    public void Trigger(Event event, int priority){
-        if (isTrigger()) {
-            throw new ArithmeticException("already triggered");
-        }
-        setOK(event.isOK());
-        setValue(event.getValue());
-        setTrigger(true);
-        this.environment.Schedule(this, priority);
+    public boolean Triggered(){
+        return !this.value.equals(PENGDING);
     }
 
-    public void Succeed(String data, int priority){
-        if (isTrigger()) {
-            throw new ArithmeticException("already triggered");
-        }
-        setOK(true);
-        setValue(data);
-        setTrigger(true);
-        this.environment.Schedule(this, priority);
+    public boolean Processed(){
+        return this.callBackList == null;
     }
 
-    public void Fail(String err, int priority){
-        if (isTrigger()) {
-            throw new ArithmeticException("already triggered");
-        }
-        setOK(false);
-        setValue(err);
-        setTrigger(true);
-        this.environment.Schedule(this, priority);
+    public boolean OK(){
+        return this.ok;
     }
 
-    public void AddCallback(Action<Event> callback) {
-        if (isProcessed()) throw new ArithmeticException("Event is already processed.");
-        this.callBackList.add(callback);
+    public void setValue(Object value) {
+        this.value = value;
     }
 
-    public void RemoveCallback(Action<Event> callback) {
-        if (isProcessed()) throw new ArithmeticException("Event is already processed.");
-        this.callBackList.remove(callback);
+    public void setOk(boolean ok) {
+        this.ok = ok;
     }
 
-    public void Process(){
-        if (isProcessed()) {
-            throw new ArithmeticException("already triggered");
+    public Object Value(){
+        if (this.value.equals(PENGDING)) {
+            throw new RuntimeException("Value is not yet available");
         }
-        setProcessed(true);
-        for (int i = 0; i < this.callBackList.size(); i++){
-            this.callBackList.get(i).invoke(this);
-        }
-        setCallBackList(null);
+        return this.value;
     }
+
+    public void Trigger(Event event){
+        this.ok = event.OK();
+        setValue(event.Value());
+        this.environment.Schedule(this);
+    }
+
+    public Event Succeed(Object value){
+        if (!this.value.equals(PENGDING)) {
+            throw new RuntimeException("Value is not yet available");
+        }
+        setOk(true);
+        setValue(value);
+        this.environment.Schedule(this);
+        return this;
+    }
+
+    public Event Fail(Exception exc){
+        if (!this.value.equals(PENGDING)) {
+            throw new RuntimeException("Value is not yet available");
+        }
+        if (!(exc instanceof Exception)){
+            throw new ValueException("It is not an exception");
+        }
+
+        setOk(false);
+        setValue(exc);
+        this.environment.Schedule(this);
+        return this;
+    }
+
 }
 

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class Timeout extends Event{
+public class Initialize extends Event {
 
     private Environment environment;
     private List<Function> callBackList;
@@ -12,14 +12,12 @@ public class Timeout extends Event{
     private int delay;
     private boolean ok;
 
-
-    public Timeout(Environment environment, int delay, Object value){
-        this.environment = environment;
+    public Initialize(Environment env, Process process) {
+        this.environment = env;
         this.callBackList = new ArrayList<>();
-        this.value = value;
-        this.delay = delay;
+        callBackList.add(process.Resume());
+        this.value = null;
         this.ok = true;
-        environment.Schedule(this, NORMAL, delay);
+        env.Schedule(this, URGENT);
     }
-
 }
