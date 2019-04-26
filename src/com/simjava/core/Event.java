@@ -1,10 +1,14 @@
 package com.simjava.core;
 
 import java.util.ArrayList;
+import java.util.List;
+import com.simjava.action.*;
 
 public class Event {
 
     private Environment environment;
+    private List<Action<Event>> callBackList;
+
     private String value;
     private boolean isOK;
     private boolean isAlive;
@@ -15,7 +19,7 @@ public class Event {
         return environment;
     }
 
-    public void setEnvironment(Environment environment) {
+    private void setEnvironment(Environment environment) {
         this.environment = environment;
     }
 
@@ -31,12 +35,12 @@ public class Event {
         return isOK;
     }
 
-    public void setOK(boolean OK) {
+    protected void setOK(boolean OK) {
         isOK = OK;
     }
 
     public boolean isAlive() {
-        return isAlive;
+        return !isTrigger() && !isProcessed();
     }
 
     public void setAlive(boolean alive) {
@@ -47,7 +51,7 @@ public class Event {
         return isProcessed;
     }
 
-    public void setProcessed(boolean processed) {
+    protected void setProcessed(boolean processed) {
         isProcessed = processed;
     }
 
@@ -55,33 +59,29 @@ public class Event {
         return isTrigger;
     }
 
-    public void setTrigger(boolean trigger) {
+    protected void setTrigger(boolean trigger) {
         isTrigger = trigger;
     }
 
-    //    private EventValue eventValue;
-//    private ArrayList<String> callBacks;
+    public List<Action<Event>> getCallBackList() {
+        return callBackList;
+    }
+
+    public void setCallBackList(List<Action<Event>> callBackList) {
+        this.callBackList = callBackList;
+    }
 
     public Event(){
         this.environment = null;
         this.value = "";
-//        this.eventValue = new EventValue("", true);
-//        this.callBacks = new ArrayList<String>();
-
-    }
+        this.callBackList = new ArrayList<>();
+        }
 
     public Event(Environment env){
         this.environment = env;
         this.value = "";
-//        this.callBacks = new ArrayList<String>();
-//        this.eventValue = new EventValue("", true);
-    }
+        this.callBackList = new ArrayList<>();
 
-    public Event(Environment env, String value){
-        this.environment = env;
-        this.value = value;
-//        this.callBacks = callBacks;
-//        this.eventValue = value;
     }
 
     public void Trigger(Event event, int priority){
@@ -91,7 +91,7 @@ public class Event {
         setOK(event.isOK());
         setValue(event.getValue());
         setTrigger(true);
-        this.environment.Schedule(this, priority, 0);
+        this.environment.Schedule(this, priority);
     }
 
     public void Succeed(String data, int priority){
@@ -101,7 +101,7 @@ public class Event {
         setOK(true);
         setValue(data);
         setTrigger(true);
-        this.environment.Schedule(this, priority, 0);
+        this.environment.Schedule(this, priority);
     }
 
     public void Fail(String err, int priority){
@@ -111,14 +111,28 @@ public class Event {
         setOK(false);
         setValue(err);
         setTrigger(true);
-        this.environment.Schedule(this, priority, 0);
+        this.environment.Schedule(this, priority);
+    }
+
+    public void AddCallback(Action<Event> callback) {
+        if (isProcessed()) throw new ArithmeticException("Event is already processed.");
+        this.callBackList.add(callback);
+    }
+
+    public void RemoveCallback(Action<Event> callback) {
+        if (isProcessed()) throw new ArithmeticException("Event is already processed.");
+        this.callBackList.remove(callback);
     }
 
     public void Process(){
-        if (isTrigger()) {
+        if (isProcessed()) {
             throw new ArithmeticException("already triggered");
         }
         setProcessed(true);
+        for (int i = 0; i < this.callBackList.size(); i++){
+            this.callBackList.get(i).invoke(this);
+        }
+        setCallBackList(null);
     }
 }
 

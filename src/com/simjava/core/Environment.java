@@ -1,5 +1,7 @@
 package com.simjava.core;
 
+import com.simjava.yield.Yielderable;
+
 import java.util.Iterator;
 
 public class Environment {
@@ -7,8 +9,8 @@ public class Environment {
     private int now;
     private int eventID;
     private EventQueue eventQueue;
-    private boolean shouldStop;
-    Process activeProcess;
+    private boolean shouldStop = false;
+    private Process activeProcess;
 
     public int getNow() {
         return now;
@@ -59,19 +61,32 @@ public class Environment {
     }
 
     public void Step(){
-        QueueItem queueItem = eventQueue.Pop();
+        QueueItem queueItem = this.eventQueue.Pop();
 
-        if (eventQueue == null){
+        if (this.eventQueue == null){
             setShouldStop(true);
             return;
         }
         Event event = queueItem.getEvent();
-        this.now = queueItem.getTime();
+        // Time of QueueItem
+        setNow(queueItem.getTime());
+        System.out.println("Env Now is " + getNow());
         event.Process();
     }
 
     public void Schedule(Event event, int priority, int delay){
-        eventQueue.Push(new QueueItem(event, this.getNow() + delay, priority, getEventID()+1));
+//        eventQueue.Push(new QueueItem(event, this.getNow() + delay, priority, getEventID()+1));
+        eventQueue.Push(DoSchedule(delay, event, priority));
+        System.out.println("push into queue " + event.getValue());
+    }
+    public void Schedule(Event event, int priority) {
+        eventQueue.Push(DoSchedule(getNow(), event, priority));
+    }
+
+
+    public QueueItem DoSchedule(int delay, Event event, int priority){
+        System.out.println("QueueItem time is " + (this.getNow() + delay));
+        return new QueueItem(event, this.getNow() + delay, priority, getEventID()+1);
     }
 
     public void Exit(){
@@ -79,19 +94,37 @@ public class Environment {
     }
 
     public String Run(int util){
-        Event utilEvent = new Event(this);
-        while (!shouldStop) {
+        while (this.getNow() < util && !this.isShouldStop()){
             Step();
         }
-        return utilEvent.getValue();
+
+        return Run(new Event(this));
     }
 
-    public Process Process(Iterable<Event> generator, int priority) {
+    public String Run(Event stopEvent){
+        setShouldStop(false);
+        if (stopEvent != null){
+            if (stopEvent.isProcessed()) return stopEvent.getValue();
+        }
+        while (!isShouldStop()) {
+            Step();
+        }
+        if (stopEvent == null) return null;
+        return stopEvent.getValue();
+    }
+
+    public Process Process(Yielderable<Event> generator, int priority) {
         return new Process(this, generator, priority);
     }
 
-    public Timeout Timeout(int delay, int priority ) {
-        return new Timeout(this, delay, "", true, 0);
+    public Timeout Timeout(int delay, int priority, String data) {
+        return new Timeout(this, delay, data, true, priority);
     }
+
+    public void Reset(){
+        setNow(0);
+        setEventQueue(new EventQueue());
+    }
+
 
 }

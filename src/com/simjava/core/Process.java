@@ -1,43 +1,56 @@
 package com.simjava.core;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import com.simjava.action.ActionImpl;
+import com.simjava.yield.*;
+
 
 public class Process extends Event{
 
     private Event target;
-    private Iterator<Event> generator;
+    private ClosableIterator<Event> generator;
 
-    public Process(Environment environment, Iterable<Event> generator, int priority){
-        this.generator = generator.iterator();
-        setOK(true);
-        target = new Initialize(environment, this, priority);
+    public ClosableIterator<Event> getGenerator() {
+        return generator;
     }
 
-    private class Initialize extends Event {
-      public Initialize(Environment environment, Process process, int priority) {
-            setOK(true);
-            setTrigger(true);
-            environment.Schedule(this, priority, 0);
-        }
+    public void setGenerator(ClosableIterator<Event> generator) {
+        this.generator = generator;
+    }
+
+    public Event getTarget() {
+        return target;
+    }
+
+    protected void setTarget(Event target) {
+        this.target = target;
+    }
+
+    public Process(Environment environment, Yielderable<Event> generator, int priority){
+        super(environment);
+        this.generator = generator.iterator();
+        setOK(true);
+        this.target = new Initialize(environment, this, priority);
     }
 
     public void Interrupt(String cause, int priority) {
         if (isTrigger()) throw new ArithmeticException("The process has terminated and cannot be interrupted.");
-        if (this.getEnvironment().getActiveProcess() == this) throw new ArithmeticException("A process is not allowed to interrupt itself.");
+        if (super.getEnvironment().getActiveProcess() == this) throw new ArithmeticException("A process is not allowed to interrupt itself.");
 
-        var interruptEvent = new Event(this.getEnvironment());
+        var interruptEvent = new Event(super.getEnvironment());
+        interruptEvent.AddCallback(new ActionImpl<Event>(e -> Resume(e)));
         interruptEvent.Fail(cause, priority);
+
+        if (this.target != null) this.target.RemoveCallback(new ActionImpl<Event>(e -> Resume(e)));
     }
 
     protected void Resume(Event event) {
-        this.getEnvironment().setActiveProcess(this);
+        super.getEnvironment().setActiveProcess(this);
         while (true) {
             if (event.isOK()) {
                 if (generator.hasNext()) {
                     if (this.isTrigger()) {
                         // the generator called e.g. Environment.ActiveProcess.Fail
-                        this.getEnvironment().setActiveProcess(null);
+                        super.getEnvironment().setActiveProcess(null);
                         return;
                     }
                     if (!ProceedToEvent()) {
@@ -76,7 +89,7 @@ public class Process extends Event{
                 } else break;
             }
         }
-        this.getEnvironment().setActiveProcess(null);
+        super.getEnvironment().setActiveProcess(null);
     }
 
     protected boolean ProceedToEvent() {
@@ -90,5 +103,15 @@ public class Process extends Event{
         if (isOK()) return false;
         setOK(true);
         return true;
+    }
+
+    private class Initialize extends Event {
+        public Initialize(Environment environment, Process process, int priority) {
+            super(environment);
+            super.AddCallback(new ActionImpl<Event>(e -> process.Resume(e)));
+            setOK(true);
+            setTrigger(true);
+            environment.Schedule(this, priority);
+        }
     }
 }
