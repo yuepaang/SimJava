@@ -43,7 +43,7 @@ public class EventQueue implements Iterable<EventQueueNode> {
 
 /// Enqueue a node - .Priority must be set beforehand!  O(log n)
     public EventQueueNode Enqueue(int primaryPriority, Event event, int secondaryPriority) {
-        var node = new EventQueueNode(primaryPriority, secondaryPriority, event, _numNodesEverEnqueued+1, _numNodes+1);
+        EventQueueNode node = new EventQueueNode(primaryPriority, secondaryPriority, event, _numNodesEverEnqueued+1, _numNodes+1);
         _nodes[_numNodes] = node;
         CascadeUp(_nodes[_numNodes]);
         return node;

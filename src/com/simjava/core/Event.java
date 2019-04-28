@@ -68,7 +68,11 @@ public class Event {
         this.callBackList.remove(callback);
     }
 
-    public void Process(){
+    static <E extends Exception> void doThrow(Exception e) throws E {
+        throw (E)e;
+    }
+
+    public void Process() throws StopSimulationException {
         if (isProcessed) {
             throw new ArithmeticException("already triggered");
         }

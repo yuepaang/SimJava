@@ -2,54 +2,19 @@ package com.simjava.core;
 
 import com.simjava.collections.EventQueue;
 import com.simjava.collections.EventQueueNode;
+import com.simjava.action.ActionImpl;
+import javafx.scene.paint.Stop;
 
 public class Environment {
 
-    private int now;
-    private int eventID;
-    private EventQueue eventQueue;
-    private boolean shouldStop;
-    private Process activeProcess;
+    public int now;
+    public int eventID;
+    public EventQueue eventQueue;
+    public boolean shouldStop;
+    public Process activeProcess;
 
-    public int getNow() {
-        return now;
-    }
+    public boolean _stopRequested = false;
 
-    public void setNow(int now) {
-        this.now = now;
-    }
-
-    public int getEventID() {
-        return eventID;
-    }
-
-    public void setEventID(int eventID) {
-        this.eventID = eventID;
-    }
-
-    public EventQueue getEventQueue() {
-        return eventQueue;
-    }
-
-    public void setEventQueue(EventQueue eventQueue) {
-        this.eventQueue = eventQueue;
-    }
-
-    public boolean isShouldStop() {
-        return shouldStop;
-    }
-
-    public void setShouldStop(boolean shouldStop) {
-        this.shouldStop = shouldStop;
-    }
-
-    public Process getActiveProcess() {
-        return activeProcess;
-    }
-
-    public void setActiveProcess(Process activeProcess) {
-        this.activeProcess = activeProcess;
-    }
 
     public Environment(){
         this.now = 0;
@@ -59,23 +24,27 @@ public class Environment {
         this.activeProcess = null;
     }
 
-    public void Step(){
+    public void Step() throws StopSimulationException {
         Event event;
         EventQueueNode next = this.eventQueue.Dequeue();
 
-        this.setNow(next.primaryPriority);
+        now = next.primaryPriority;
         event = next.event;
-        event.Process();
+        try {
+            event.Process();
+        } catch (StopSimulationException e) {
+            doThrow(e);
+        }
     }
 
     public void Schedule(int delay, Event event, int priority){
-//        eventQueue.Push(new QueueItem(event, this.getNow() + delay, priority, getEventID()+1));
-        int eventTime = getNow() + delay;
+        if (delay < 0) throw new IllegalArgumentException("Negative delays are not allowed");
+        int eventTime = now + delay;
         DoSchedule(eventTime, event, priority);
     }
 
     public void Schedule(Event event, int priority) {
-        DoSchedule(getNow(), event, priority);
+        DoSchedule(now, event, priority);
     }
 
     public EventQueueNode DoSchedule(int delay, Event event, int priority){
@@ -89,12 +58,8 @@ public class Environment {
         return eventQueue.Enqueue(delay, event, priority);
     }
 
-    public void Exit(){
-        setShouldStop(true);
-    }
-
     public Object Run(int until){
-        if (until < getNow()) throw new RuntimeException("Simulation end time must lie in the future");
+        if (until < now) throw new RuntimeException("Simulation end time must lie in the future");
         Event stopEvent = new Event(this);
         EventQueueNode node = DoSchedule(until, stopEvent, 0);
         node.insertionIndex = -1;
@@ -102,30 +67,43 @@ public class Environment {
         return Run(stopEvent);
     }
 
+    static <E extends Exception> void doThrow(Exception e) throws E {
+        throw (E)e;
+    }
+
     public Object Run(Event stopEvent){
-        setShouldStop(false);
+        _stopRequested = false;
         if (stopEvent != null){
             if (stopEvent.isProcessed) return stopEvent.value;
+            stopEvent.AddCallback(new ActionImpl<>(e -> doThrow(new StopSimulationException(e.value))));
         }
-        while (!isShouldStop()) {
-            Step();
-        }
+
+        try {
+            boolean stop = eventQueue.count() == 0 || _stopRequested;
+            while (!stop) {
+                Step();
+                stop = eventQueue.count() == 0 || _stopRequested;
+            }
+        } catch (StopSimulationException e) { return e.value; }
         if (stopEvent == null) return null;
+        if (!stopEvent.isTriggered) throw new RuntimeException("No scheduled events left but \"until\" event was not triggered.");
         return stopEvent.value;
+    }
+
+    public void StopAsync() {
+        _stopRequested = true;
     }
 
     public Process Process(Iterable<Event> generator, int priority) {
         return new Process(this, generator, priority);
     }
 
-    public Timeout Timeout(int delay, int priority, String data) {
-        return new Timeout(this, delay, data, true, priority);
+    public Timeout Timeout(int delay, int priority) {
+        return new Timeout(this, delay, "", true, priority);
     }
 
-    public void Reset(){
-        setNow(0);
-        setEventQueue(new EventQueue(1024));
+    public void Reset() {
+        now = 0;
+        eventQueue = new EventQueue(1024);
     }
-
-
 }

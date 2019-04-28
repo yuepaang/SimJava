@@ -20,7 +20,7 @@ public class Process extends Event{
 
     public void Interrupt(Object cause, int priority) {
         if (isTriggered) throw new ArithmeticException("The process has terminated and cannot be interrupted.");
-        if (environment.getActiveProcess() == this) throw new ArithmeticException("A process is not allowed to interrupt itself.");
+        if (environment.activeProcess == this) throw new ArithmeticException("A process is not allowed to interrupt itself.");
 
         Event interruptEvent = new Event(environment);
         interruptEvent.AddCallback(new ActionImpl<>(e -> Resume(e)));
@@ -30,13 +30,13 @@ public class Process extends Event{
     }
 
     protected void Resume(Event event) {
-        environment.setActiveProcess(this);
+        environment.activeProcess = this;
         while (true) {
             if (event.isOK) {
                 if (generator.hasNext()) {
                     if (this.isTriggered) {
                         // the generator called e.g. Environment.ActiveProcess.Fail
-                        environment.setActiveProcess(null);
+                        environment.activeProcess = null;
                         return;
                     }
                     if (!ProceedToEvent()) {
@@ -61,7 +61,7 @@ public class Process extends Event{
                 if (generator.hasNext()) {
                     if (isTriggered) {
                         // the generator called e.g. Environment.ActiveProcess.Fail
-                        environment.setActiveProcess(null);
+                        environment.activeProcess = null;
                         return;
                     }
                     // if we move next, but IsOk is still false
@@ -75,7 +75,7 @@ public class Process extends Event{
                 } else break;
             }
         }
-        environment.setActiveProcess(null);
+        environment.activeProcess = null;
     }
 
     protected boolean ProceedToEvent() {
@@ -95,7 +95,7 @@ public class Process extends Event{
     private class Initialize extends Event {
         public Initialize(Environment environment, Process process, int priority) {
             super(environment);
-            super.AddCallback(new ActionImpl<Event>(e -> process.Resume(e)));
+            super.AddCallback(new ActionImpl<>(e -> process.Resume(e)));
             isOK = true;
             isTriggered = true;
             environment.Schedule(this, priority);
