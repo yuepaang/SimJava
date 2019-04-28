@@ -1,8 +1,7 @@
 package com.simjava.core;
 
-import com.simjava.yield.Yielderable;
-
-import java.util.Iterator;
+import com.simjava.collections.EventQueue;
+import com.simjava.collections.EventQueueNode;
 
 public class Environment {
 
@@ -55,65 +54,67 @@ public class Environment {
     public Environment(){
         this.now = 0;
         this.eventID = 0;
-        this.eventQueue = new EventQueue();
+        this.eventQueue = new EventQueue(1024);
         this.shouldStop = false;
         this.activeProcess = null;
     }
 
     public void Step(){
-        QueueItem queueItem = this.eventQueue.Pop();
+        Event event;
+        EventQueueNode next = this.eventQueue.Dequeue();
 
-        if (this.eventQueue == null){
-            setShouldStop(true);
-            return;
-        }
-        Event event = queueItem.getEvent();
-        // Time of QueueItem
-        setNow(queueItem.getTime());
-        System.out.println("Env Now is " + getNow());
+        this.setNow(next.primaryPriority);
+        event = next.event;
         event.Process();
     }
 
-    public void Schedule(Event event, int priority, int delay){
+    public void Schedule(int delay, Event event, int priority){
 //        eventQueue.Push(new QueueItem(event, this.getNow() + delay, priority, getEventID()+1));
-        eventQueue.Push(DoSchedule(delay, event, priority));
-        System.out.println("push into queue " + event.getValue());
+        int eventTime = getNow() + delay;
+        DoSchedule(eventTime, event, priority);
     }
+
     public void Schedule(Event event, int priority) {
-        eventQueue.Push(DoSchedule(getNow(), event, priority));
+        DoSchedule(getNow(), event, priority);
     }
 
-
-    public QueueItem DoSchedule(int delay, Event event, int priority){
-        System.out.println("QueueItem time is " + (this.getNow() + delay));
-        return new QueueItem(event, this.getNow() + delay, priority, getEventID()+1);
+    public EventQueueNode DoSchedule(int delay, Event event, int priority){
+        if (eventQueue.maxSize() == eventQueue.count()) {
+            EventQueue oldSchedule = eventQueue;
+            eventQueue = new EventQueue(1024);
+            for (EventQueueNode e: oldSchedule) {
+                eventQueue.Enqueue(e.primaryPriority, e.event, e.secondaryPriority);
+            }
+        }
+        return eventQueue.Enqueue(delay, event, priority);
     }
 
     public void Exit(){
         setShouldStop(true);
     }
 
-    public String Run(int util){
-        while (this.getNow() < util && !this.isShouldStop()){
-            Step();
-        }
-
-        return Run(new Event(this));
+    public Object Run(int until){
+        if (until < getNow()) throw new RuntimeException("Simulation end time must lie in the future");
+        Event stopEvent = new Event(this);
+        EventQueueNode node = DoSchedule(until, stopEvent, 0);
+        node.insertionIndex = -1;
+        eventQueue.OnNodeUpdated(node);
+        return Run(stopEvent);
     }
 
-    public String Run(Event stopEvent){
+    public Object Run(Event stopEvent){
         setShouldStop(false);
         if (stopEvent != null){
-            if (stopEvent.isProcessed()) return stopEvent.getValue();
+            if (stopEvent.isProcessed) return stopEvent.value;
         }
         while (!isShouldStop()) {
             Step();
         }
         if (stopEvent == null) return null;
-        return stopEvent.getValue();
+        return stopEvent.value;
     }
 
-    public Process Process(Yielderable<Event> generator, int priority) {
+    public Process Process(Iterable<Event> generator, int priority) {
         return new Process(this, generator, priority);
     }
 
@@ -123,7 +124,7 @@ public class Environment {
 
     public void Reset(){
         setNow(0);
-        setEventQueue(new EventQueue());
+        setEventQueue(new EventQueue(1024));
     }
 
 

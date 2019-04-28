@@ -1,64 +1,50 @@
 package com.simjava.core;
 
 import com.simjava.action.ActionImpl;
-import com.simjava.yield.*;
+
+import java.util.Iterator;
 
 
 public class Process extends Event{
 
-    private Event target;
-    private ClosableIterator<Event> generator;
+    public Event target;
+    public Iterator<Event> generator;
 
-    public ClosableIterator<Event> getGenerator() {
-        return generator;
-    }
 
-    public void setGenerator(ClosableIterator<Event> generator) {
-        this.generator = generator;
-    }
-
-    public Event getTarget() {
-        return target;
-    }
-
-    protected void setTarget(Event target) {
-        this.target = target;
-    }
-
-    public Process(Environment environment, Yielderable<Event> generator, int priority){
+    public Process(Environment environment, Iterable<Event> generator, int priority){
         super(environment);
         this.generator = generator.iterator();
-        setOK(true);
+        this.isOK = true;
         this.target = new Initialize(environment, this, priority);
     }
 
-    public void Interrupt(String cause, int priority) {
-        if (isTrigger()) throw new ArithmeticException("The process has terminated and cannot be interrupted.");
-        if (super.getEnvironment().getActiveProcess() == this) throw new ArithmeticException("A process is not allowed to interrupt itself.");
+    public void Interrupt(Object cause, int priority) {
+        if (isTriggered) throw new ArithmeticException("The process has terminated and cannot be interrupted.");
+        if (environment.getActiveProcess() == this) throw new ArithmeticException("A process is not allowed to interrupt itself.");
 
-        Event interruptEvent = new Event(super.getEnvironment());
-        interruptEvent.AddCallback(new ActionImpl<Event>(e -> Resume(e)));
+        Event interruptEvent = new Event(environment);
+        interruptEvent.AddCallback(new ActionImpl<>(e -> Resume(e)));
         interruptEvent.Fail(cause, priority);
 
-        if (this.target != null) this.target.RemoveCallback(new ActionImpl<Event>(e -> Resume(e)));
+        if (this.target != null) this.target.RemoveCallback(new ActionImpl<>(e -> Resume(e)));
     }
 
     protected void Resume(Event event) {
-        super.getEnvironment().setActiveProcess(this);
+        environment.setActiveProcess(this);
         while (true) {
-            if (event.isOK()) {
+            if (event.isOK) {
                 if (generator.hasNext()) {
-                    if (this.isTrigger()) {
+                    if (this.isTriggered) {
                         // the generator called e.g. Environment.ActiveProcess.Fail
-                        super.getEnvironment().setActiveProcess(null);
+                        environment.setActiveProcess(null);
                         return;
                     }
                     if (!ProceedToEvent()) {
                         event = target;
                         continue;
                     } else break;
-                } else if (!this.isTrigger()) {
-                    Succeed(event.getValue(), 0);
+                } else if (!this.isTriggered) {
+                    Succeed(event.value, 0);
                     break;
                 } else break;
             } else {
@@ -69,39 +55,40 @@ public class Process extends Event{
                  * we know that the error was not handled. It is assumed the error is handled if
                  * HandleFault() is called on the environment's ActiveProcess which will reset the
                  * flag. */
-                setOK(false);
-                setValue(event.getValue());
+                isOK = false;
+                value = event.value;
 
                 if (generator.hasNext()) {
-                    if (isTrigger()) {
+                    if (isTriggered) {
                         // the generator called e.g. Environment.ActiveProcess.Fail
-                        this.getEnvironment().setActiveProcess(null);
+                        environment.setActiveProcess(null);
                         return;
                     }
                     // if we move next, but IsOk is still false
-                    if (!isOK()) throw new ArithmeticException("The process did not react to being faulted.");
+                    if (!isOK) throw new ArithmeticException("The process did not react to being faulted.");
                     // otherwise HandleFault was called and the fault was handled
                     if (ProceedToEvent()) break;
-                } else if (!isTrigger()) {
-                    if (!isOK()) Fail(event.getValue(), 0);
-            else Succeed(event.getValue(), 0);
+                } else if (!isTriggered) {
+                    if (!isOK) Fail(event.value, 0);
+            else Succeed(event.value, 0);
                     break;
                 } else break;
             }
         }
-        super.getEnvironment().setActiveProcess(null);
+        environment.setActiveProcess(null);
     }
 
     protected boolean ProceedToEvent() {
         target = generator.next();
-        this.setValue(target.getValue());
-        if (target.isProcessed()) return false;
+        value = target.value;
+        if (target.isProcessed) return false;
+        target.AddCallback(new ActionImpl<>(e -> Resume(e)));
         return true;
     }
 
     public boolean HandleFault() {
-        if (isOK()) return false;
-        setOK(true);
+        if (isOK) return false;
+        isOK = true;
         return true;
     }
 
@@ -109,8 +96,8 @@ public class Process extends Event{
         public Initialize(Environment environment, Process process, int priority) {
             super(environment);
             super.AddCallback(new ActionImpl<Event>(e -> process.Resume(e)));
-            setOK(true);
-            setTrigger(true);
+            isOK = true;
+            isTriggered = true;
             environment.Schedule(this, priority);
         }
     }

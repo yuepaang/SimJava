@@ -1,5 +1,6 @@
 import com.simjava.core.Environment;
 import com.simjava.core.Event;
+import com.simjava.core.Generator;
 import com.simjava.core.Process;
 import com.simjava.yield.*;
 
@@ -8,17 +9,14 @@ public class CarTest {
     static int parkingDuration = 5;
     static int drivingDuration = 2;
 
-    private static Yielderable<Event> Car(Environment environment){
-        return yield ->{
-            int i = 0;
-            while (true){
-                if (i == 15) break;
-                System.out.println("Start parking at " + environment.getNow());
-                yield.returning(environment.Timeout(parkingDuration, 1, "parking"));
-
-                System.out.println("Start driving at " + environment.getNow());
-                yield.returning(environment.Timeout(drivingDuration, 1, "driving"));
-                i++;
+    private static Iterable<Event> Car(Environment environment){
+        return new Generator<>() {
+            @Override
+            protected void run() throws InterruptedException {
+                for (int i = 0; i < 5; i++) {
+                    yield(environment.Timeout(parkingDuration, 0, "parking"));
+                    yield(environment.Timeout(drivingDuration, 0, "driving"));
+                }
             }
         };
 
@@ -42,6 +40,6 @@ public class CarTest {
 
 //        System.out.println(environment.getEventQueue().Pop().getTime() + environment.getEventQueue().Pop().getEvent().getValue());
 
-//        environment.Run(15);
+        environment.Run(15);
     }
 }

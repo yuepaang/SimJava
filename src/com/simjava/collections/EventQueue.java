@@ -1,14 +1,12 @@
 package com.simjava.collections;
 
-import com.sun.tools.corba.se.idl.Generator;
-
 import java.util.Iterator;
-
+import com.simjava.core.Generator;
 import com.simjava.core.Event;
-import java.util.Iterable;
+
 
 // public class EventQueue{
-public class EventQueue extends Iterable<EventQueueNode> {
+public class EventQueue implements Iterable<EventQueueNode> {
 
     int _numNodes;
     EventQueueNode[] _nodes;
@@ -65,7 +63,7 @@ public class EventQueue extends Iterable<EventQueueNode> {
 //Performance appears to be slightly better when this is NOT inlined o_O
     private void CascadeUp(EventQueueNode node) {
         //aka Heapify-up
-        int parent = node.queueIndex() / 2;
+        int parent = node.queueIndex / 2;
         while (parent >= 1) {
             EventQueueNode parentNode = _nodes[parent];
             if (HasHigherPriority(parentNode, node)) break;
@@ -73,7 +71,7 @@ public class EventQueue extends Iterable<EventQueueNode> {
             //Node has lower priority value, so move it up the heap
             Swap(node, parentNode); //For some reason, this is faster with Swap() rather than (less..?) individual operations, like in CascadeDown()
 
-            parent = node.queueIndex() / 2;
+            parent = node.queueIndex / 2;
         }
     }
 
@@ -158,9 +156,9 @@ public class EventQueue extends Iterable<EventQueueNode> {
         OnNodeUpdated(node);
     }
 
-    void OnNodeUpdated(EventQueueNode node) {
+    public void OnNodeUpdated(EventQueueNode node) {
         //Bubble the updated node up or down as appropriate
-        int parentIndex = node.queueIndex() / 2;
+        int parentIndex = node.queueIndex / 2;
         EventQueueNode parentNode = _nodes[parentIndex];
 
         if (parentIndex > 0 && HasHigherPriority(node, parentNode)) {
@@ -173,7 +171,7 @@ public class EventQueue extends Iterable<EventQueueNode> {
 
 // Removes a node from the queue.  Note that the node does not need to be the head of the queue.  O(log n)
     public void Remove(EventQueueNode node) {
-        if (!Contains(node)) {
+        if (!contains(node)) {
             return;
         }
         if (_numNodes <= 1) {
@@ -200,22 +198,32 @@ public class EventQueue extends Iterable<EventQueueNode> {
         }
     }
 
+    public Iterator<EventQueueNode> iterator() {
+        Generator<EventQueueNode> tempGenerator = new Generator<EventQueueNode>() {
+            @Override
+            protected void run() throws InterruptedException {
+                for (int i = 1; i < _numNodes; i++) {
+                    yield(_nodes[i]);
+                }
+            }
+        };
+        return tempGenerator.iterator();
+    }
 
-/// <summary>
+
 /// <b>Should not be called in production code.</b>
 /// Checks to make sure the queue is still in a valid state.  Used for testing/debugging the queue.
-/// </summary>
     public boolean IsValidQueue() {
         for (int i = 1; i < _nodes.length; i++) {
-        if (_nodes[i] != null) {
-            int childLeftIndex = 2 * i;
-            if (childLeftIndex < _nodes.length && _nodes[childLeftIndex] != null && HasHigherPriority(_nodes[childLeftIndex], _nodes[i]))
-                return false;
+            if (_nodes[i] != null) {
+                int childLeftIndex = 2 * i;
+                if (childLeftIndex < _nodes.length && _nodes[childLeftIndex] != null && HasHigherPriority(_nodes[childLeftIndex], _nodes[i]))
+                    return false;
 
-            int childRightIndex = childLeftIndex + 1;
-            if (childRightIndex < _nodes.length && _nodes[childRightIndex] != null && HasHigherPriority(_nodes[childRightIndex], _nodes[i]))
-                return false;
-        }
+                int childRightIndex = childLeftIndex + 1;
+                if (childRightIndex < _nodes.length && _nodes[childRightIndex] != null && HasHigherPriority(_nodes[childRightIndex], _nodes[i]))
+                    return false;
+            }
         }
         return true;
     }

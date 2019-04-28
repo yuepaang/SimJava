@@ -4,9 +4,9 @@ import com.simjava.core.Event;
 
 public class EventQueueNode {
 
-    int primaryPriority;
+    public int primaryPriority;
 
-    int secondaryPriority;
+    public int secondaryPriority;
 
     public Event event;
 
