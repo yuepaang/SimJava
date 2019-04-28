@@ -10,7 +10,6 @@ public class Environment {
     public int now;
     public int eventID;
     public EventQueue eventQueue;
-    public boolean shouldStop;
     public Process activeProcess;
 
     public boolean _stopRequested = false;
@@ -20,11 +19,11 @@ public class Environment {
         this.now = 0;
         this.eventID = 0;
         this.eventQueue = new EventQueue(1024);
-        this.shouldStop = false;
         this.activeProcess = null;
     }
 
     public void Step() throws StopSimulationException {
+        System.out.println("Step()");
         Event event;
         EventQueueNode next = this.eventQueue.Dequeue();
 
@@ -61,6 +60,7 @@ public class Environment {
     public Object Run(int until){
         if (until < now) throw new RuntimeException("Simulation end time must lie in the future");
         Event stopEvent = new Event(this);
+//        System.out.println("Trigger" + stopEvent.isTriggered);
         EventQueueNode node = DoSchedule(until, stopEvent, 0);
         node.insertionIndex = -1;
         eventQueue.OnNodeUpdated(node);

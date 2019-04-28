@@ -25,6 +25,7 @@ public class Event {
         this.environment = env;
         this.value = new Object();
         this.callBackList = new ArrayList<>();
+        this.isTriggered = true;
 
     }
 
