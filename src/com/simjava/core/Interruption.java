@@ -1,30 +1,32 @@
 package com.simjava.core;
 
+import com.simjava.action.Action;
+import com.simjava.action.ActionImpl;
+
 import java.util.function.Function;
 import java.util.List;
 import java.util.ArrayList;
 
 public class Interruption extends Event {
 
-    private Environment environment;
-    private List<Function> callBackList;
-    private Object value;
-    private int delay;
-    private boolean ok;
-
+    public Environment environment;
+    public List<Action> callBackList;
+    public Object value;
+    public int delay;
+    public boolean ok;
     private Process process;
 
     public Interruption(Process process, String cause) {
-        this.environment = process.getEnvironment();
+        this.environment = process.environment;
         this.callBackList = new ArrayList<>();
-        callBackList.add(this.Interrupt());
+        callBackList.add(new ActionImpl<Event>(e -> Interrupt(e)));
         this.value = new InterruptedException(cause);
         this.ok = false;
 
-        if (!process.getValue().equals(PENGDING)) {
+        if (!process.value.equals(PENGDING)) {
             throw new RuntimeException("Process has terminated and cannot be interrupted.");
         }
-        if (process.equals(this.environment.getActiveProcess())) {
+        if (process.equals(this.environment.activeProcess)) {
             throw new RuntimeException("A process is not allowed to interrupt itself.");
         }
 
@@ -33,10 +35,10 @@ public class Interruption extends Event {
     }
 
     public void Interrupt(Event event) {
-        if (!this.process.getValue().equals(PENGDING)) {
+        if (!this.process.value.equals(PENGDING)) {
             return;
         }
-        this.process.getTarget().getCallBackList().remove(this.process.Resume());
+        this.process.target.callBackList.remove(new ActionImpl<Event>(e -> process.Resume(e)));
         this.process.Resume(this);
     }
 }

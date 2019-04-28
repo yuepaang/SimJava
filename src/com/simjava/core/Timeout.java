@@ -6,11 +6,11 @@ import java.util.function.Function;
 
 public class Timeout extends Event{
 
-    private Environment environment;
-    private List<Function> callBackList;
-    private Object value;
-    private int delay;
-    private boolean ok;
+    public Environment environment;
+    public List<Function> callBackList;
+    public Object value;
+    public int delay;
+    public boolean ok;
 
 
     public Timeout(Environment environment, int delay, Object value){
