@@ -199,7 +199,7 @@ public class EventQueue implements Iterable<EventQueueNode> {
     }
 
     public Iterator<EventQueueNode> iterator() {
-        Generator<EventQueueNode> tempGenerator = new Generator<>() {
+        Generator<EventQueueNode> tempGenerator = new Generator<EventQueueNode>() {
             @Override
             protected void run() throws InterruptedException {
                 for (int i = 1; i < _numNodes; i++) {

@@ -14,7 +14,7 @@ public class Car2Test {
         }
 
         public Iterable<Event> Run(){
-            return new Generator<>() {
+            return new Generator<Event>() {
                 @Override
                 protected void run() throws InterruptedException {
                     while (true) {
@@ -31,7 +31,7 @@ public class Car2Test {
         }
 
         private Iterable<Event> Charge(int duration){
-            return new Generator<>() {
+            return new Generator<Event>() {
                 @Override
                 protected void run() throws InterruptedException {
                     yield(env.Timeout(duration, 0));

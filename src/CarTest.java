@@ -9,7 +9,7 @@ public class CarTest {
     static int drivingDuration = 2;
 
     private static Iterable<Event> Car(Environment environment){
-        return new Generator<>() {
+        return new Generator<Event>() {
             @Override
             protected void run() throws InterruptedException {
                 while (true) {
