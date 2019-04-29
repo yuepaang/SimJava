@@ -12,7 +12,7 @@ public class CarTest {
         return new Generator<Event>() {
             @Override
             protected void run() throws InterruptedException {
-                for (int i = 0; i < 5; i++) {
+                while (true) {
                     System.out.println("Start parking at " + environment.now);
                     yield(environment.Timeout(parkingDuration, 0));
                     System.out.println("Start driving at " + environment.now);
@@ -20,21 +20,16 @@ public class CarTest {
                 }
             }
         };
-
     }
 
-
     public static void main(String[] args){
+        long startTime =  System.currentTimeMillis();
+
         Environment environment = new Environment();
-
-//        Event evt = new Event(environment);
-//        evt.value = "test";
-//        evt.AddCallback(new ActionImpl<>(e -> System.out.println(e.value.toString())));
-//        evt.callBackList.get(0).invoke(evt);
-
-        environment.Process(Car(environment), 0);
-        System.out.println(environment.eventQueue.count());
-
+        environment.Process(Car(environment));
         environment.Run(15);
+
+        long endTime =  System.currentTimeMillis();
+        System.out.println("total time : "+ (endTime-startTime) + "ms");
     }
 }

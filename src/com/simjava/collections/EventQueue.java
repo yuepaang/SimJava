@@ -43,7 +43,7 @@ public class EventQueue implements Iterable<EventQueueNode> {
 
 /// Enqueue a node - .Priority must be set beforehand!  O(log n)
     public EventQueueNode Enqueue(int primaryPriority, Event event, int secondaryPriority) {
-        EventQueueNode node = new EventQueueNode(primaryPriority, secondaryPriority, event, _numNodesEverEnqueued+1, _numNodes+1);
+        EventQueueNode node = new EventQueueNode(primaryPriority, secondaryPriority, event, _numNodesEverEnqueued++, ++_numNodes);
         _nodes[_numNodes] = node;
         CascadeUp(_nodes[_numNodes]);
         return node;
@@ -199,7 +199,7 @@ public class EventQueue implements Iterable<EventQueueNode> {
     }
 
     public Iterator<EventQueueNode> iterator() {
-        Generator<EventQueueNode> tempGenerator = new Generator<EventQueueNode>() {
+        Generator<EventQueueNode> tempGenerator = new Generator<>() {
             @Override
             protected void run() throws InterruptedException {
                 for (int i = 1; i < _numNodes; i++) {

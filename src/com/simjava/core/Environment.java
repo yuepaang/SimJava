@@ -23,11 +23,11 @@ public class Environment {
     }
 
     public void Step() throws StopSimulationException {
-        System.out.println("Step()");
         Event event;
         EventQueueNode next = this.eventQueue.Dequeue();
 
         now = next.primaryPriority;
+
         event = next.event;
         try {
             event.Process();
@@ -60,7 +60,6 @@ public class Environment {
     public Object Run(int until){
         if (until < now) throw new RuntimeException("Simulation end time must lie in the future");
         Event stopEvent = new Event(this);
-//        System.out.println("Trigger" + stopEvent.isTriggered);
         EventQueueNode node = DoSchedule(until, stopEvent, 0);
         node.insertionIndex = -1;
         eventQueue.OnNodeUpdated(node);
@@ -74,17 +73,22 @@ public class Environment {
     public Object Run(Event stopEvent){
         _stopRequested = false;
         if (stopEvent != null){
-            if (stopEvent.isProcessed) return stopEvent.value;
+            if (stopEvent.isProcessed) {
+                return stopEvent.value;
+            }
             stopEvent.AddCallback(new ActionImpl<>(e -> doThrow(new StopSimulationException(e.value))));
         }
 
         try {
+            // FIXME count = 0
             boolean stop = eventQueue.count() == 0 || _stopRequested;
             while (!stop) {
                 Step();
                 stop = eventQueue.count() == 0 || _stopRequested;
             }
-        } catch (StopSimulationException e) { return e.value; }
+        } catch (StopSimulationException e) {
+            return e.value;
+        }
         if (stopEvent == null) return null;
         if (!stopEvent.isTriggered) throw new RuntimeException("No scheduled events left but \"until\" event was not triggered.");
         return stopEvent.value;
@@ -96,6 +100,10 @@ public class Environment {
 
     public Process Process(Iterable<Event> generator, int priority) {
         return new Process(this, generator, priority);
+    }
+
+    public Process Process(Iterable<Event> generator) {
+        return new Process(this, generator, 0);
     }
 
     public Timeout Timeout(int delay, int priority) {

@@ -19,13 +19,14 @@ public class Event {
         this.environment = null;
         this.value = new Object();
         this.callBackList = new ArrayList<>();
+        this.isTriggered = false;
         }
 
     public Event(Environment env){
         this.environment = env;
         this.value = new Object();
         this.callBackList = new ArrayList<>();
-        this.isTriggered = true;
+        this.isTriggered = false;
 
     }
 
