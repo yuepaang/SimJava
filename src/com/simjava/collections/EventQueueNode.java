@@ -10,8 +10,10 @@ public class EventQueueNode {
 
     public Event event;
 
+    // Represents the order the node was inserted in
     public long insertionIndex;
 
+    // Represents the current position in the queue
     public int queueIndex;
 
     public EventQueueNode(int primaryPriority, int secondaryPriority, Event event, long insertionIndex, int queueIndex){

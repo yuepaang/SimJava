@@ -1,7 +1,4 @@
-import com.simjava.action.ActionImpl;
 import com.simjava.core.*;
-import com.simjava.core.Process;
-import com.simjava.yield.*;
 
 public class CarTest {
 

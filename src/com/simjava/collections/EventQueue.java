@@ -5,7 +5,6 @@ import com.simjava.core.Generator;
 import com.simjava.core.Event;
 
 
-// public class EventQueue{
 public class EventQueue implements Iterable<EventQueueNode> {
 
     int _numNodes;

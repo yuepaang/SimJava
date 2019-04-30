@@ -3,7 +3,6 @@ package com.simjava.core;
 import com.simjava.collections.EventQueue;
 import com.simjava.collections.EventQueueNode;
 import com.simjava.action.ActionImpl;
-import javafx.scene.paint.Stop;
 
 public class Environment {
 
@@ -80,7 +79,6 @@ public class Environment {
         }
 
         try {
-            // FIXME count = 0
             boolean stop = eventQueue.count() == 0 || _stopRequested;
             while (!stop) {
                 Step();
