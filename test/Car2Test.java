@@ -1,5 +1,6 @@
 import com.simjava.core.*;
 import com.simjava.core.Process;
+import com.simjava.yield.Yielderable;
 
 
 public class Car2Test {
@@ -13,19 +14,33 @@ public class Car2Test {
             this.action = env.Process(Run());
         }
 
-        public Iterable<Event> Run(){
-            return new Generator<Event>() {
-                @Override
-                protected void run() throws InterruptedException {
-                    while (true) {
-                        System.out.println("Start parking and charging at " + env.now);
-                        int chargeDuration = 5;
-                        yield(env.Process(Charge(chargeDuration)));
+//        public Iterable<Event> Run(){
+//            return new Generator<Event>() {
+//                @Override
+//                protected void run() throws InterruptedException {
+//                    while (true) {
+//                        System.out.println("Start parking and charging at " + env.now);
+//                        int chargeDuration = 5;
+//                        yield(env.Process(Charge(chargeDuration)));
+//
+//                        System.out.println("Start driving at " + env.now);
+//                        int tripDuration = 2;
+//                        yield(env.Timeout(tripDuration, 0));
+//                    }
+//                }
+//            };
+//        }
 
-                        System.out.println("Start driving at " + env.now);
-                        int tripDuration = 2;
-                        yield(env.Timeout(tripDuration, 0));
-                    }
+        public Yielderable<Event> Run() {
+            return yield -> {
+                while (true) {
+                    System.out.println("Start parking and charging at " + env.now);
+                    int chargeDuration = 5;
+                    yield.returning(env.Process(Charge(chargeDuration)));
+
+                    System.out.println("Start driving at " + env.now);
+                    int tripDuration = 2;
+                    yield.returning(env.Timeout(tripDuration, 0));
                 }
             };
         }
