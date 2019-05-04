@@ -15,8 +15,8 @@ public class Request extends Event {
         owner = environment.activeProcess;
     }
 
-    public void Dispose() throws Throwable {
-        super.finalize();
+    public void Dispose() {
+//        super.finalize();
         if (disposeCallback != null) disposeCallback.invoke(this);
     }
 }

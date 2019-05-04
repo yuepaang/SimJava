@@ -25,7 +25,7 @@ public class Resource {
         this.environment = environment;
         this.capacity = capacity;
         requestQueue = new LinkedList<>();
-        releaseQueue = new PriorityQueue<>();
+        releaseQueue = new LinkedList<>();
         user = new HashSet<>();
         whenAnyQueue = new ArrayList<>();
         whenFullQueue = new ArrayList<>();
@@ -34,7 +34,7 @@ public class Resource {
     }
 
     public Request Request() {
-        var request = new Request(environment, new ActionImpl<Event>(e -> TriggerRelease(e)), new ActionImpl<>(e -> DisposeCallback(e)));
+        var request = new Request(environment, new ActionImpl<>(e -> TriggerRelease(e)), new ActionImpl<>(e -> DisposeCallback(e)));
         requestQueue.addLast(request);
         TriggerRequest(null);
         return request;
