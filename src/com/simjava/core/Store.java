@@ -51,48 +51,48 @@ public class Store {
     }
 
     public StorePut Put(Object item) {
-        var put = new StorePut(Environment, new ActionImpl<>(e -> TriggerGet(e)), item);
+        StorePut put = new StorePut(Environment, new ActionImpl<>(e -> TriggerGet(e)), item);
         PutQueue.offer(put);
         TriggerPut(null);
         return put;
     }
 
     public StoreGet Get() {
-        var get = new StoreGet(Environment, new ActionImpl<>(e -> TriggerPut(e)));
+        StoreGet get = new StoreGet(Environment, new ActionImpl<>(e -> TriggerPut(e)));
         GetQueue.offer(get);
         TriggerGet(null);
         return get;
     }
 
     public Event WhenNew() {
-        var whenNew = new Event(Environment);
+        Event whenNew = new Event(Environment);
         WhenNewQueue.add(whenNew);
         return whenNew;
     }
 
     public Event WhenAny() {
-        var whenAny = new Event(Environment);
+        Event whenAny = new Event(Environment);
         WhenAnyQueue.add(whenAny);
         TriggerWhenAny();
         return whenAny;
     }
 
     public Event WhenFull() {
-        var whenFull = new Event(Environment);
+        Event whenFull = new Event(Environment);
         WhenFullQueue.add(whenFull);
         TriggerWhenFull();
         return whenFull;
     }
 
     public Event WhenEmpty() {
-        var whenEmpty = new Event(Environment);
+        Event whenEmpty = new Event(Environment);
         WhenEmptyQueue.add(whenEmpty);
         TriggerWhenEmpty();
         return whenEmpty;
     }
 
     public Event WhenChange() {
-        var whenChange = new Event(Environment);
+        Event whenChange = new Event(Environment);
         WhenChangeQueue.add(whenChange);
         return whenChange;
     }
@@ -106,14 +106,14 @@ public class Store {
 
     protected void DoGet(StoreGet get) {
         if (Items.size() > 0) {
-            var item = Items.poll();
+            Object item = Items.poll();
             get.Succeed(item, 0);
         }
     }
 
     protected void TriggerPut(Event event) {
         while (PutQueue.size() > 0) {
-            var put = PutQueue.peek();
+            StorePut put = PutQueue.peek();
             DoPut(put);
             if (put.isTriggered) {
                 PutQueue.poll();
@@ -127,7 +127,7 @@ public class Store {
 
     protected void TriggerGet(Event event) {
         while (GetQueue.size() > 0) {
-            var get = GetQueue.peek();
+            StoreGet get = GetQueue.peek();
             DoGet(get);
             if (get.isTriggered) {
                 GetQueue.poll();

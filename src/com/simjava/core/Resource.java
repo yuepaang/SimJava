@@ -34,7 +34,7 @@ public class Resource {
     }
 
     public Request Request() {
-        var request = new Request(environment, new ActionImpl<>(e -> TriggerRelease(e)), new ActionImpl<>(e -> DisposeCallback(e)));
+        Request request = new Request(environment, new ActionImpl<>(e -> TriggerRelease(e)), new ActionImpl<>(e -> DisposeCallback(e)));
         requestQueue.addLast(request);
         TriggerRequest(null);
         return request;
@@ -48,34 +48,34 @@ public class Resource {
     }
 
     public Event WhenAny() {
-        var whenAny = new Event(environment);
+        Event whenAny = new Event(environment);
         whenAnyQueue.add(whenAny);
         TriggerWhenAny();
         return whenAny;
     }
 
     public Event whenFull() {
-        var whenFull = new Event(environment);
+        Event whenFull = new Event(environment);
         whenFullQueue.add(whenFull);
         TriggerWhenFull();
         return whenFull;
     }
 
     public Event WhenEmpty() {
-        var whenEmpty = new Event(environment);
+        Event whenEmpty = new Event(environment);
         whenEmptyQueue.add(whenEmpty);
         TriggerWhenEmpty();
         return whenEmpty;
     }
 
     public Event WhenChange() {
-        var whenChange = new Event(environment);
+        Event whenChange = new Event(environment);
         whenChangeQueue.add(whenChange);
         return whenChange;
     }
 
     protected void DisposeCallback(Event event) {
-        var request = (Request)event;
+        Request request = (Request)event;
         if (request != null) {
             Release(request);
         }
@@ -96,7 +96,7 @@ public class Resource {
 
     protected void TriggerRequest(Event event) {
         while (requestQueue.size() > 0) {
-            var request = requestQueue.getFirst();
+            Request request = requestQueue.getFirst();
             DoRequest(request);
             if (request.isTriggered) {
                 requestQueue.removeFirst();
@@ -108,7 +108,7 @@ public class Resource {
 
     protected void TriggerRelease(Event event) {
         while (releaseQueue.size() > 0) {
-            var release = releaseQueue.peek();
+            Release release = releaseQueue.peek();
             if (release.request.isAlive) {
                 if (!requestQueue.remove(release.request))
                     throw new RuntimeException("Failed to cancel a request.");

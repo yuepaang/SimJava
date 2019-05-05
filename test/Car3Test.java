@@ -8,7 +8,7 @@ public class Car3Test {
 
             System.out.printf("%s arriving at %s\n" ,name, env.now);
 
-            var req = bcs.Request();
+            Request req = bcs.Request();
             yield.returning(req);
             System.out.printf("%s starting to charge at %d\n" ,name, env.now);
             yield.returning(env.Timeout(chargeDuration, 0));
@@ -19,12 +19,15 @@ public class Car3Test {
     }
 
     public static void main(String[] args) {
-        var env = new Environment();
-        var bcs = new Resource(env, 2);
+        long startTime =  System.currentTimeMillis();
+        Environment env = new Environment();
+        Resource bcs = new Resource(env, 2);
 
         for (int i = 0; i < 4; i++) {
             env.Process(Car(env, "Car "+i, bcs, i*2, 5));
         }
         env.Run(null);
+        long endTime =  System.currentTimeMillis();
+        System.out.println("total time : "+ (endTime-startTime)/1000.0 + "s");
     }
 }
